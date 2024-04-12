@@ -1,0 +1,152 @@
+module au_top (
+    input clk,              // 100MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input usb_rx,           // USB->Serial input
+    output outled,           // to LED strip, Br pin C49, connect LED Strip to 5V for power
+    output usb_tx,          // USB->Serial output
+    output io_led [3][8],   // LEDs on IO Shield
+    output io_seg [8],      // 7-segment LEDs on IO Shield
+    output io_sel [4],      // Digit select on IO Shield
+    input io_button [5],    // 5 buttons on IO Shield
+    input io_dip [3][8]     // DIP switches on IO Shield
+  ) {
+  
+  // We shall always assume that COLUMN_DIMENSION and ROW_DIMENSION is a 2^x
+  const COLUMN_DIMENSION = 8; // how many "columns"? 
+  const ROW_DIMENSION = 8; // how many "rows"?
+
+  const PIXEL_COUNT = COLUMN_DIMENSION *  ROW_DIMENSION;   
+  const ENCODING_AMOUNT = 4; // how many different encodings are used? As example, we use 4
+  
+  // WHITE (11), BLUE (10), RED (01), GREEN (00)
+  const LEDCOLOR = {24hFFFFFF, 24hFF0000, 24h00FF00, 24h0000FF}; 
+  
+  sig rst; // reset signal
+  sig encoded_pixel_address[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
+  sig current_color_encoding[$clog2(ENCODING_AMOUNT)];
+
+  var index;
+
+  // observed output of the strip: (if matrix is used, this is the value of the top row or first row)
+  // we will pump colors from right to left 
+  // e.g.: ABCD ---> 16 bits color encoding, for 8 pixels
+  // (connector) RED WHITE GREEN WHITE WHITE BLUE BLUE BLUE (end of strip)
+  // another e.g: E is 1110 ---> 10 first (BLUE) then 11 (WHITE)
+  // TODO: change this to suit your dimension
+  dff led_encoding[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0)); // 2 bit to encode a color per pixel
+  dff temp_encoding[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(ROW_DIMENSIONx{16hABCD})); // holds temporary value (double buffering)
+  
+  ws2812b_writer led_strip(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
+  fsm state(.clk(clk), .rst(rst)) = {INIT, LOAD, IDLE};
+  
+  reverser index_reverser(#COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
+  
+  // user inputs 
+  button_conditioner latch_button(.clk(clk));
+  edge_detector latch_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  button_conditioner clear_button(.clk(clk));
+  edge_detector clear_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  button_conditioner reverse_button(.clk(clk));
+  edge_detector reverse_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  
+  // a state to toggle revere 
+  dff matrix_used(#INIT(0), .clk(clk), .rst(rst));
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    counter delay(.rst(rst), #DIV(25));
+  }
+  
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+    
+    usb_tx = usb_rx;        // loop serial port
+    
+    led = 8h00;             // turn LEDs off
+    
+    io_led = 3x{{8h00}};    // turn LEDs off
+    io_seg = 8hff;          // turn segments off
+    io_sel = 4hf;           // select no digits
+    
+    latch_button.in = io_button[0]; // use this button to latch io_dip value to led_encoding dff 
+    latch_button_edge.in = latch_button.out;
+    
+    clear_button.in = io_button[2]; // use this button to turn off all LEDs 
+    clear_button_edge.in = clear_button.out;
+    
+    reverse_button.in = io_button[1]; // use this button to enable reverse
+    reverse_button_edge.in = reverse_button.out;
+    
+    // toggle matrix used button 
+    if (reverse_button_edge.out){
+      matrix_used.d = matrix_used.q + 1;
+    }
+    
+    led_strip.update = 0; // do not refresh by default
+    led_strip.clear = 0; // do not clear by default
+    
+
+    // use io_dip[1:0]  to encode 8 unique pixel values
+    case (state.q){
+      state.IDLE:
+             if (latch_button_edge.out){
+                temp_encoding.d = ROW_DIMENSIONx{c{io_dip[1], io_dip[0]}};
+                state.d = state.LOAD;
+              }
+             if (clear_button_edge.out){
+                 led_strip.clear = 1;
+              }
+      
+      state.INIT: 
+           if (led_strip.reset & delay.value){ //  you need to artificially introduce some delay before sending data to the LED strip
+               state.d = state.LOAD;
+           }
+        
+      state.LOAD:
+            // wait until we are at RESET state before we decide to refresh the screen
+            if (led_strip.reset){
+                // tell the LED to update the pixels
+                led_strip.update = 1;
+                led_encoding.d = temp_encoding.q;
+                state.d = state.IDLE;
+            }
+    }
+    
+    // connect reverser to led_strip 
+    index_reverser.original_pixel_address = led_strip.pixel_address;
+    index_reverser.activate = matrix_used.q;
+    encoded_pixel_address = index_reverser.effective_pixel_address * $clog2(ENCODING_AMOUNT);
+    
+    // led_strip.pixel_address will vary between 0000 to 1100 
+    // address 0 --> encoding bit 1:0 
+    // address 1 --> encoding bit 3:2 
+    // address 2 --> encoding bit 5
+    // address N --> encoding bit N*2+1:N*2
+    
+ 
+   // get current color encoding for this pixel
+    for (index=0; index<$clog2(ENCODING_AMOUNT); index++){
+       current_color_encoding[index] = led_encoding.q[encoded_pixel_address+index];
+    }
+    
+    // based on the encoding extracted from dff led_encoding, we get the 24bit color value
+    led_strip.color = LEDCOLOR[current_color_encoding]; 
+    outled=led_strip.led;
+    
+    // debug 
+    // show the current LED color
+    io_led[0] = led_encoding.q[7:0];
+    io_led[1] = led_encoding.q[15:8];
+    io_led[2] = led_encoding.q[23:16];
+   
+    led[0] = matrix_used.q; 
+    led[7:1] = led_strip.pixel_address;
+    
+
+    
+  }
+}
