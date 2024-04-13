@@ -54,7 +54,8 @@ module au_top (
     ws2812b.usb_rx = usb_rx;
     ws2812b.io_button = io_button;
     ws2812b.io_dip = io_dip;
-    ws2812b.color = b01;
+    ws2812b.color = b10;
+    ws2812b.action = b0;
     
         
     if (button_conditioner.out[0]){

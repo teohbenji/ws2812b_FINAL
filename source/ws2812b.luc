@@ -4,6 +4,7 @@ module ws2812b (
     input io_button [5],    // 5 buttons on IO Shield
     input io_dip [3][8],    // DIP switches on IO Shield
     input usb_rx,           // USB->Serial input
+    input action,           // b0 = update, b1 = reset
     input color[2],
     output outled,           // to LED strip, Br pin C40, connect LED Strip to 5V for power
     output usb_tx,          // USB->Serial output
@@ -98,18 +99,25 @@ module ws2812b (
     case (state.q){
       state.IDLE:
 
-        case (color) {
-          b00: temp_encoding.d = 8x{ROM[0]};
-          b01: temp_encoding.d = 8x{ROM[1]};
-          b10: temp_encoding.d = 8x{ROM[2]};
-          b11: temp_encoding.d = 8x{ROM[3]};
-        }
-        state.d = state.LOAD;
-
-        if (clear_button_edge.out){
-            led_strip.clear = 1;
-        }
-      
+        case (action) {
+          b0:
+            //sets led color to be updated
+            case (color) {
+              b00: temp_encoding.d = 8x{ROM[0]};
+              b01: temp_encoding.d = 8x{ROM[1]};
+              b10: temp_encoding.d = 8x{ROM[2]};
+              b11: temp_encoding.d = 8x{ROM[3]};
+            }
+            
+            state.d = state.LOAD;
+            
+          b1:
+            //turns off leds
+            if (clear_button_edge.out){
+              led_strip.clear = 1;
+            }
+        }           
+        
       state.LOAD:
             // wait until we are at RESET state before we decide to refresh the screen
             if (led_strip.reset){
