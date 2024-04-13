@@ -6,6 +6,7 @@
     <component>pipeline.luc</component>
     <component>counter.luc</component>
     <component>reset_conditioner.luc</component>
+    <src>ws2812b.luc</src>
     <component>edge_detector.luc</component>
     <src>reverser.luc</src>
     <component>button_conditioner.luc</component>
