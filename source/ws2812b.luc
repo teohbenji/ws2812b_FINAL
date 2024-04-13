@@ -12,8 +12,7 @@ module ws2812b (
     output io_sel [4],      // Digit select on IO Shield
     output led [8]         // 8 user controllable LEDs
     
-    //probably add an input leds[6][6] which indicate which led to turn const
-    //also add an encoder input color to set color of all 6 led strips
+    //probably add an input leds[6][6] which indicate which led to turn on
   ) {
   
   // We shall always assume that COLUMN_DIMENSION and ROW_DIMENSION is a 2^x
@@ -49,12 +48,6 @@ module ws2812b (
   dff led_encoding[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(8x{ROM[0]})); // 2 bit to encode a color per pixel
   dff temp_encoding[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0)); // holds temporary value (double buffering)
   
-  
-  /* Not needed for ROM encoding
-  dff counter[28](.clk(clk), .rst(rst), #INIT(0));
-  dff rom_address[$clog2(ROW_DIMENSION)](.clk(clk), #INIT(0), .rst(rst));
-  */
-  
   ws2812b_writer led_strip(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
   fsm state(.clk(clk), .rst(rst)) = {IDLE, LOAD};
   
@@ -85,17 +78,8 @@ module ws2812b (
     
     io_led = 3x{{8h00}};    // turn LEDs off
     io_seg = 8hff;          // turn segments off
-    io_sel = 4hf;           // select no digits
-    
-    
-    /*Code that cycles through the rom address
-    counter.d = counter.q + 1;
-    
-    if (&counter.q){ // load new value when counter.q is all 1
-      rom_address.d = rom_address.q + 1; // advance ROM address by 1 the moment counter[27] (MSB) is 1
-    }
-    */
-    
+    io_sel = 4hf;           // select no digits    
+   
     clear_button.in = io_button[2]; // use this button to turn off all LEDs 
     clear_button_edge.in = clear_button.out;
     
@@ -113,12 +97,7 @@ module ws2812b (
     // use io_dip[2:0]  to encode 12 unique pixel values at most (24 bits)
     case (state.q){
       state.IDLE:
-        /*Code that cycles through the rom address   
-        if(~|counter.q){ // load new value when counter is all zero
-                temp_encoding.d = 8x{ROM[rom_address.q]};
-                state.d = state.LOAD;
-            }
-        */
+
         case (color) {
           b00: temp_encoding.d = 8x{ROM[0]};
           b01: temp_encoding.d = 8x{ROM[1]};
