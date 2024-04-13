@@ -23,7 +23,9 @@ module au_top (
   const LEDCOLOR = {24hFFFFFF, 24hFF0000, 24h00FF00, 24h0000FF}; 
   
   sig rst; // reset signal
+  /*DELETE REVERSER
   sig encoded_pixel_address[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
+  */
   sig current_color_encoding[$clog2(ENCODING_AMOUNT)];
 
   var index;
@@ -40,7 +42,7 @@ module au_top (
   ws2812b_writer led_strip(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
   fsm state(.clk(clk), .rst(rst)) = {INIT, LOAD, IDLE};
   
-  reverser index_reverser(#COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
+  //reverser index_reverser(#COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
   
   // user inputs 
   button_conditioner latch_button(.clk(clk));
@@ -116,10 +118,12 @@ module au_top (
             }
     }
     
+    /*DELETE REVERSER
     // connect reverser to led_strip 
     index_reverser.original_pixel_address = led_strip.pixel_address;
     index_reverser.activate = matrix_used.q;
     encoded_pixel_address = index_reverser.effective_pixel_address * $clog2(ENCODING_AMOUNT);
+    */
     
     // led_strip.pixel_address will vary between 0000 to 1100 
     // address 0 --> encoding bit 1:0 
@@ -130,7 +134,7 @@ module au_top (
  
    // get current color encoding for this pixel
     for (index=0; index<$clog2(ENCODING_AMOUNT); index++){
-       current_color_encoding[index] = led_encoding.q[encoded_pixel_address+index];
+       current_color_encoding[index] = led_encoding.q[led_strip.pixel_address+index]; //changed encoded_pixel_address
     }
     
     // based on the encoding extracted from dff led_encoding, we get the 24bit color value
