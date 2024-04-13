@@ -1,15 +1,17 @@
 module ws2812b (
     input clk,              // 100MHz clock
     input rst_n,            // reset button (active low)
-    output led [8],         // 8 user controllable LEDs
+    input io_button [5],    // 5 buttons on IO Shield
+    input io_dip [3][8],    // DIP switches on IO Shield
     input usb_rx,           // USB->Serial input
+    input color[2],
     output outled,           // to LED strip, Br pin C40, connect LED Strip to 5V for power
     output usb_tx,          // USB->Serial output
     output io_led [3][8],   // LEDs on IO Shield
     output io_seg [8],      // 7-segment LEDs on IO Shield
     output io_sel [4],      // Digit select on IO Shield
-    input io_button [5],    // 5 buttons on IO Shield
-    input io_dip [3][8]     // DIP switches on IO Shield
+    output led [8]         // 8 user controllable LEDs
+    
     //probably add an input leds[6][6] which indicate which led to turn const
     //also add an encoder input color to set color of all 6 led strips
   ) {
@@ -28,10 +30,10 @@ module ws2812b (
   
   //NOTE: Bottom of the rom is index 0!
   const ROM = {
-    16b1111111111111111, // all white 
-    16b0000000000000000, // all green
+    16b1111111111111111, // all white      
+    16b1010101010101010, // all blue 
     16b0101010101010101, // all red
-    16b1010101010101010 // all blue (end -> start of connector)
+    16b0000000000000000 // all green (end -> start of connector)
   };
   
   sig rst; // reset signal
@@ -108,7 +110,6 @@ module ws2812b (
     led_strip.update = 0; // do not refresh by default
     led_strip.clear = 0; // do not clear by default
     
-
     // use io_dip[2:0]  to encode 12 unique pixel values at most (24 bits)
     case (state.q){
       state.IDLE:
@@ -118,7 +119,12 @@ module ws2812b (
                 state.d = state.LOAD;
             }
         */
-        temp_encoding.d = 8x{ROM[2]}; //CHANGE COLOR HERE
+        case (color) {
+          b00: temp_encoding.d = 8x{ROM[0]};
+          b01: temp_encoding.d = 8x{ROM[1]};
+          b10: temp_encoding.d = 8x{ROM[2]};
+          b11: temp_encoding.d = 8x{ROM[3]};
+        }
         state.d = state.LOAD;
 
         if (clear_button_edge.out){
