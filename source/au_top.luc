@@ -14,19 +14,26 @@ module au_top (
   
   sig rst;                  // reset signal
   ws2812b ws2812b;
+  fsm state(.clk(clk), .rst(rst)) = {IDLE, LOAD, CLEAR};
+  
+  // user inputs 
+  button_conditioner latch_button(.clk(clk));
+  edge_detector latch_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  button_conditioner clear_button(.clk(clk));
+  edge_detector clear_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  
 
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-    button_conditioner button_conditioner[3];
   }
   
   always {
     
     reset_cond.in = ~rst_n;   // input raw inverted reset signal
     rst = reset_cond.out;     // conditioned reset
-    button_conditioner.in = io_button[2:0];
+
     
     led = c{3b0, io_button};  // connect buttons to LEDs to see which button is pressed
     
@@ -35,19 +42,13 @@ module au_top (
     io_seg = 8b0; // connect segments to the driver
     io_sel = 4b0110; // turn on rightmost digit, and leftmost digit
     
-    /*
-    input clk,              // 100MHz clock
-    input rst_n,            // reset button (active low)
-    output led [8],         // 8 user controllable LEDs
-    input usb_rx,           // USB->Serial input
-    output outled,           // to LED strip, Br pin C40, connect LED Strip to 5V for power
-    output usb_tx,          // USB->Serial output
-    output io_led [3][8],   // LEDs on IO Shield
-    output io_seg [8],      // 7-segment LEDs on IO Shield
-    output io_sel [4],      // Digit select on IO Shield
-    input io_button [5],    // 5 buttons on IO Shield
-    input io_dip [3][8]     // DIP switches on IO Shield
-    */
+    
+    latch_button.in = io_button[0]; // use this button to turn on led
+    latch_button_edge.in = latch_button.out;
+    
+    clear_button.in = io_button[2]; // use this button to turn off all LEDs 
+    clear_button_edge.in = clear_button.out;
+    
     
     ws2812b.clk = clk;
     ws2812b.rst_n = rst_n;
@@ -55,13 +56,29 @@ module au_top (
     ws2812b.io_button = io_button;
     ws2812b.io_dip = io_dip;
     ws2812b.color = b10;
-    ws2812b.action = b0;
+    ws2812b.action = b00;
     
+    
+    
+    case (state.q){
+      state.IDLE:
+         ws2812b.action = b00; //reset action back to idle
+         if (latch_button_edge.out){
+            state.d = state.LOAD;
+          }
+         if (clear_button_edge.out){
+            state.d = state.CLEAR;
+          }
+                  
+      state.LOAD:
+         ws2812b.action = b01;
+         state.d = state.IDLE;
         
-    if (button_conditioner.out[0]){
-       // change color to all red        
+      state.CLEAR:
+         ws2812b.action = b10;
+         state.d = state.IDLE;
     }
-    
+
     // ****** OUTPUT SETTING ****** //
     // Test output all leds light up  
     outled = ws2812b.outled; 

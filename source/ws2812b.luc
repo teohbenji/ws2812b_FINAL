@@ -4,7 +4,7 @@ module ws2812b (
     input io_button [5],    // 5 buttons on IO Shield
     input io_dip [3][8],    // DIP switches on IO Shield
     input usb_rx,           // USB->Serial input
-    input action,           // b0 = update, b1 = reset
+    input action[2],           // b0 = update, b1 = reset
     input color[2],
     output outled,           // to LED strip, Br pin C40, connect LED Strip to 5V for power
     output usb_tx,          // USB->Serial output
@@ -50,7 +50,7 @@ module ws2812b (
   dff temp_encoding[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0)); // holds temporary value (double buffering)
   
   ws2812b_writer led_strip(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
-  fsm state(.clk(clk), .rst(rst)) = {IDLE, LOAD};
+  fsm state(.clk(clk), .rst(rst)) = {INIT, IDLE, LOAD, CLEAR};
   
   reverser index_reverser(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
   
@@ -81,10 +81,10 @@ module ws2812b (
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits    
    
-    clear_button.in = io_button[2]; // use this button to turn off all LEDs 
+    clear_button.in = io_button[2];  
     clear_button_edge.in = clear_button.out;
     
-    reverse_button.in = io_button[1]; // use this button to enable reverse
+    reverse_button.in = io_button[1]; 
     reverse_button_edge.in = reverse_button.out;
     
     // toggle matrix used button 
@@ -95,38 +95,46 @@ module ws2812b (
     led_strip.update = 0; // do not refresh by default
     led_strip.clear = 0; // do not clear by default
     
-    // use io_dip[2:0]  to encode 12 unique pixel values at most (24 bits)
     case (state.q){
+      state.INIT:
+          temp_encoding.d = 8x{ROM[0]};//temp value to silence error
+          led_strip.clear = 1; //turn off strip at the start
+          state.d = state.IDLE;
+        
       state.IDLE:
 
-        case (action) {
-          b0:
-            //sets led color to be updated
-            case (color) {
-              b00: temp_encoding.d = 8x{ROM[0]};
-              b01: temp_encoding.d = 8x{ROM[1]};
-              b10: temp_encoding.d = 8x{ROM[2]};
-              b11: temp_encoding.d = 8x{ROM[3]};
-            }
-            
-            state.d = state.LOAD;
-            
-          b1:
-            //turns off leds
-            if (clear_button_edge.out){
-              led_strip.clear = 1;
-            }
-        }           
+          case (action) {          
+            b01:
+              //sets led color to be updated
+              case (color) {
+                b00: temp_encoding.d = 8x{ROM[0]};
+                b01: temp_encoding.d = 8x{ROM[1]};
+                b10: temp_encoding.d = 8x{ROM[2]};
+                b11: temp_encoding.d = 8x{ROM[3]};
+              }
+              
+              state.d = state.LOAD;
+              
+            b10:            
+               state.d = state.CLEAR;
+              
+            //b00
+            default:
+              temp_encoding.d = temp_encoding.q;//do nothing
+          }           
         
       state.LOAD:
-            // wait until we are at RESET state before we decide to refresh the screen
-            if (led_strip.reset){
-                // tell the LED to update the pixels
-                led_strip.update = 1;
-                led_encoding.d = temp_encoding.q;
-                state.d = state.IDLE;
-            }
-    }
+          // wait until we are at RESET state before we decide to refresh the screen
+          if (led_strip.reset){
+              // tell the LED to update the pixels
+              led_strip.update = 1;
+              led_encoding.d = temp_encoding.q;
+              state.d = state.IDLE;
+          }
+      state.CLEAR:
+          led_strip.clear = 1;
+          state.d = state.IDLE;  
+          }
     
     // connect reverser to led_strip 
     index_reverser.original_pixel_address = led_strip.pixel_address;
@@ -157,9 +165,7 @@ module ws2812b (
    
     led[0] = matrix_used.q; 
     led[7:1] = led_strip.pixel_address;
-    
-
-    
+       
   }
 }
 
