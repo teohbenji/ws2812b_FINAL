@@ -64,7 +64,7 @@ module au_top (
     ws2812b.color = b10;
     ws2812b.action = b00;
     
-    rom.address = 6b001111; //map 16 right now -> binary + 1
+    rom.address = 6b010010; //map 19 right now -> binary + 1
     rom_output = rom.value;
     
     ws2812b.lit_leds_1 = rom_output[5:0];
