@@ -16,7 +16,12 @@ pin led[7] LED7;
 pin usb_rx USB_TX;
 pin usb_tx USB_RX;
 
-pin outled C40;
+pin outled_1 C28;
+pin outled_2 C31;
+pin outled_3 C34;
+pin outled_4 C37;
+pin outled_5 C40;
+pin outled_6 C43;
 
 
 pin io_led[0][0] B21;

@@ -5,7 +5,12 @@ module au_top (
     input usb_rx,           // USB->Serial input
     output usb_tx,          // USB->Serial output
     output io_led [3][8],   // LEDs on IO Shield
-    output outled,
+    output outled_1,
+    output outled_2,
+    output outled_3,
+    output outled_4,
+    output outled_5,
+    output outled_6,
     output io_seg [8],      // 7-segment LEDs on IO Shield (ANODE)
     output io_sel [4],      // Digit select on IO Shield
     input io_button [5],    // 5 buttons on IO Shield
@@ -57,7 +62,12 @@ module au_top (
     ws2812b.io_dip = io_dip;
     ws2812b.color = b10;
     ws2812b.action = b00;
-    ws2812b.lit_leds = 6b101010;
+    ws2812b.lit_leds_1 = 6b000001;
+    ws2812b.lit_leds_2 = 6b000010;
+    ws2812b.lit_leds_3 = 6b000100;
+    ws2812b.lit_leds_4 = 6b001000;
+    ws2812b.lit_leds_5 = 6b010000;
+    ws2812b.lit_leds_6 = 6b100000;
     
     
     
@@ -82,7 +92,12 @@ module au_top (
 
     // ****** OUTPUT SETTING ****** //
     // Test output all leds light up  
-    outled = ws2812b.outled; 
+    outled_1 = ws2812b.outled;
+    outled_2 = ws2812b.outled; 
+    outled_3 = ws2812b.outled; 
+    outled_4 = ws2812b.outled; 
+    outled_5 = ws2812b.outled; 
+    outled_6 = ws2812b.outled;  
     io_led = ws2812b.io_led; 
 
 

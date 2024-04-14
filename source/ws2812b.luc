@@ -6,7 +6,12 @@ module ws2812b (
     input usb_rx,           // USB->Serial input
     input action[2],        // b0 = update, b1 = reset TODO: might have to change to always update state if connected directly to register
     input color[2],         //connect to correct map index register
-    input lit_leds[6],      //end -> start of connector, make 6 of this one for each strip 
+    input lit_leds_1[6],      //end -> start of connector, make 6 of this one for each strip
+    input lit_leds_2[6],
+    input lit_leds_3[6],
+    input lit_leds_4[6],
+    input lit_leds_5[6],
+    input lit_leds_6[6], 
     output outled,           // to LED strip, Br pin C40, connect LED Strip to 5V for power
     output usb_tx,          // USB->Serial output
     output io_led [3][8],   // LEDs on IO Shield
@@ -116,7 +121,7 @@ module ws2812b (
               // Turn off specific LEDs
               for (index = 0; index < 6; index++) {
                   // turn off leds
-                  if (lit_leds[index] == b0) {
+                  if (lit_leds_1[index] == b0) {
                       temp_encoding.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
                   }
               }
