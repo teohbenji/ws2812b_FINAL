@@ -4,7 +4,12 @@ module ws2812b (
     input usb_rx,           // USB->Serial input
     input action[2],        // b0 = update, b1 = reset TODO: might have to change to always update state if connected directly to register
     input color[2],         //connect to correct map index register
-    input display[36],      //contains map data
+    input lit_leds_1[6],      //end -> start of connector, make 6 of this one for each strip
+    input lit_leds_2[6],
+    input lit_leds_3[6],
+    input lit_leds_4[6],
+    input lit_leds_5[6],
+    input lit_leds_6[6], 
     output outled_1,           // to LED strip, Br pin C40, connect LED Strip to 5V for power    
     output outled_2,    
     output outled_3,
@@ -38,9 +43,6 @@ module ws2812b (
   };
   
   sig rst; // reset signal
-  
-  //end -> start of connector
-  sig lit_leds_1[6], lit_leds_2[6], lit_leds_3[6], lit_leds_4[6], lit_leds_5[6], lit_leds_6[6];  
   
   sig encoded_pixel_address_1[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
   sig current_color_encoding_1[$clog2(ENCODING_AMOUNT)];
@@ -127,13 +129,6 @@ module ws2812b (
     led_strip_5.clear = 0; 
     led_strip_6.update = 0; 
     led_strip_6.clear = 0; 
-    
-    lit_leds_1 = display[5:0];
-    lit_leds_2 = display[11:6];
-    lit_leds_3 = display[17:12];
-    lit_leds_4 = display[23:18];
-    lit_leds_5 = display[29:24];
-    lit_leds_6 = display[35:30];
     
     case (state.q){
       state.INIT:

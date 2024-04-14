@@ -1,0 +1,19 @@
+module rom (
+	// 6 bit encoding for 30+ rom states
+	input address[6], 
+
+	// 42 bit output,
+	// value[35:0] is map
+	// value[38:36] is endx
+  // value[41:39] is endy
+	output value[42] 
+  ) 
+{
+  const ROM = {
+  36b000011001110001100000100000111000001 //map 1 (end -> start of connector)
+  };
+  
+  always {
+	value = ROM[address];
+  }
+}

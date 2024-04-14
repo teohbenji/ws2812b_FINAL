@@ -10,6 +10,7 @@
     <component>edge_detector.luc</component>
     <src>reverser.luc</src>
     <component>button_conditioner.luc</component>
+    <src>rom.luc</src>
     <constraint>custom.acf</constraint>
     <constraint lib="true">au.xdc</constraint>
   </files>
