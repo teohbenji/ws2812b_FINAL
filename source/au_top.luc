@@ -57,6 +57,7 @@ module au_top (
     ws2812b.io_dip = io_dip;
     ws2812b.color = b10;
     ws2812b.action = b00;
+    ws2812b.lit_leds = 6b101010;
     
     
     
