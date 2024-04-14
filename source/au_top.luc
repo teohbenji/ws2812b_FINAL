@@ -91,7 +91,7 @@ module au_top (
     // Test output all leds light up  
     outled_1 = ws2812b.outled_1;
     outled_2 = ws2812b.outled_2; 
-    outled_3 = ws2812b.outled_1; 
+    outled_3 = ws2812b.outled_3; 
     outled_4 = ws2812b.outled_1; 
     outled_5 = ws2812b.outled_1; 
     outled_6 = ws2812b.outled_1;  
