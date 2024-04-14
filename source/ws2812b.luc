@@ -1,8 +1,6 @@
 module ws2812b (
     input clk,              // 100MHz clock
     input rst_n,            // reset button (active low)
-    input io_button [5],    // 5 buttons on IO Shield
-    input io_dip [3][8],    // DIP switches on IO Shield
     input usb_rx,           // USB->Serial input
     input action[2],        // b0 = update, b1 = reset TODO: might have to change to always update state if connected directly to register
     input color[2],         //connect to correct map index register
@@ -58,13 +56,7 @@ module ws2812b (
   fsm state(.clk(clk), .rst(rst)) = {INIT, IDLE, LOAD, CLEAR};
   
   reverser index_reverser(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
-  
-  // user inputs 
-  button_conditioner clear_button(.clk(clk));
-  edge_detector clear_button_edge(.clk(clk), #RISE(1), #FALL(0));
-  button_conditioner reverse_button(.clk(clk));
-  edge_detector reverse_button_edge(.clk(clk), #RISE(1), #FALL(0));
-  
+
   // a state to toggle revere 
   dff matrix_used(#INIT(0), .clk(clk), .rst(rst));
   
@@ -85,18 +77,7 @@ module ws2812b (
     io_led = 3x{{8h00}};    // turn LEDs off
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits    
-   
-    clear_button.in = io_button[2];  
-    clear_button_edge.in = clear_button.out;
-    
-    reverse_button.in = io_button[1]; 
-    reverse_button_edge.in = reverse_button.out;
-    
-    // toggle matrix used button 
-    if (reverse_button_edge.out){
-      matrix_used.d = matrix_used.q + 1;
-    }
-    
+       
     led_strip.update = 0; // do not refresh by default
     led_strip.clear = 0; // do not clear by default
     
@@ -118,7 +99,7 @@ module ws2812b (
                 b11: temp_encoding.d = 8x{ROM[3]};
               }
               
-              // Turn off specific LEDs
+              // Turn off specific LEDs for strip 1
               for (index = 0; index < 6; index++) {
                   // turn off leds
                   if (lit_leds_1[index] == b0) {
