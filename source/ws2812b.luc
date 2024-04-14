@@ -4,8 +4,8 @@ module ws2812b (
     input io_button [5],    // 5 buttons on IO Shield
     input io_dip [3][8],    // DIP switches on IO Shield
     input usb_rx,           // USB->Serial input
-    input action[2],           // b0 = update, b1 = reset
-    input color[2],
+    input action[2],        // b0 = update, b1 = reset TODO: might have to change to always update state if connected directly to register
+    input color[2],         //connect to correct map index register
     output outled,           // to LED strip, Br pin C40, connect LED Strip to 5V for power
     output usb_tx,          // USB->Serial output
     output io_led [3][8],   // LEDs on IO Shield
@@ -21,19 +21,18 @@ module ws2812b (
   const ROW_DIMENSION = 8; // how many "rows"?
 
   const PIXEL_COUNT = COLUMN_DIMENSION *  ROW_DIMENSION;   
-  const ENCODING_AMOUNT = 4; // how many different encodings are used? As example, we use 4
+  const ENCODING_AMOUNT = 5; // how many different encodings are used? As example, we use 4
   
   // This is a custom encoding
-  // WHITE (11), BLUE (10), RED (01), GREEN (00)
-  const LEDCOLOR = {24hFFFFFF, 24hFF0000, 24h00FF00, 24h0000FF}; 
-  
+  // WHITE (100), BLUE (011), RED (010), GREEN (001), OFF(000)
+  const LEDCOLOR = {24hFFFFFF, 24hFF0000, 24h00FF00, 24h0000FF, 24h000000}; 
   
   //NOTE: Bottom of the rom is index 0!
   const ROM = {
-    16b1111111111111111, // all white      
-    16b1010101010101010, // all blue 
-    16b0101010101010101, // all red
-    16b0000000000000000 // all green (end -> start of connector)
+    24b100100100100100100100100, //all white
+    24b011011011011011011011011, //all blue
+    24b010010010010010010010010, //all red
+    24b001001001001001001001001 //all green (end -> start of connector)
   };
   
   sig rst; // reset signal
@@ -113,6 +112,15 @@ module ws2812b (
                 b11: temp_encoding.d = 8x{ROM[3]};
               }
               
+              // Turn off specific LEDs
+              for (index = 0; index < PIXEL_COUNT; index++) {
+                  // Check if this LED should be turned off
+                  // turn off 1st and 2nd led
+                  if (index == 0 || index == 1) {
+                      temp_encoding.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 2b00; // Set the encoding for this LED to all zeros (turn off)
+                  }
+              }
+
               state.d = state.LOAD;
               
             b10:            
