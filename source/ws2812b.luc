@@ -30,9 +30,16 @@ module ws2812b (
   const PIXEL_COUNT = COLUMN_DIMENSION *  ROW_DIMENSION;   
   const ENCODING_AMOUNT = 5; // how many different encodings are used? As example, we use 4
   
+  /*
   // This is a custom encoding
   // WHITE (100), BLUE (011), RED (010), GREEN (001), OFF(000)
-  const LEDCOLOR = {24hFFFFFF, 24hFF0000, 24h00FF00, 24h0000FF, 24h000000}; 
+  const LEDCOLOR = {24hFFFFFF, 24hFF0000, 24h00FF00, 24h0000FF, 24h000000}; */
+  
+  //Custom encoding
+  // OFF(100), BLUE (011), BLUE(010), GREEN(001), RED (000)
+  const LEDCOLOR = {24h000000, 24hFF0000, 24hFF0000, 24h0000FF, 24h00FF00}; 
+  
+  
   
   //NOTE: Bottom of the rom is index 0!
   const ROM = {
@@ -186,42 +193,42 @@ module ws2812b (
               // Turn off specific LEDs for strip 1
               for (index = 0; index < 6; index++) {
                   if (lit_leds_1[index] == b0) {
-                      temp_encoding_1.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                      temp_encoding_1.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b100;
                   }
               }
             
               // Turn off specific LEDs for strip 2
               for (index = 0; index < 6; index++) {
                   if (lit_leds_2[index] == b0) {
-                      temp_encoding_2.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                      temp_encoding_2.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b100;
                   }
               }
             
               // Turn off specific LEDs for strip 3
               for (index = 0; index < 6; index++) {
                   if (lit_leds_3[index] == b0) {
-                      temp_encoding_3.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                      temp_encoding_3.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b100;
                   }
               }
             
              // Turn off specific LEDs for strip 4
               for (index = 0; index < 6; index++) {
                   if (lit_leds_4[index] == b0) {
-                      temp_encoding_4.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                      temp_encoding_4.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b100;
                   }
               }
             
               // Turn off specific LEDs for strip 5
               for (index = 0; index < 6; index++) {
                   if (lit_leds_5[index] == b0) {
-                      temp_encoding_5.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                      temp_encoding_5.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b100;
                   }
               }
             
               // Turn off specific LEDs for strip 6
               for (index = 0; index < 6; index++) {
                   if (lit_leds_6[index] == b0) {
-                      temp_encoding_6.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                      temp_encoding_6.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b100;
                   }
               }
 
