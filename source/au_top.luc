@@ -61,7 +61,7 @@ module au_top (
     ws2812b.clk = clk;
     ws2812b.rst_n = rst_n;
     ws2812b.usb_rx = usb_rx;
-    ws2812b.color = b10;
+    ws2812b.color = b11; //b00:red , b01:green , b10/b11: blue
     ws2812b.action = b00;
     
     rom.address = 6b001111; //map 16 right now -> binary + 1
