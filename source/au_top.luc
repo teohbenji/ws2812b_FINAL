@@ -18,6 +18,7 @@ module au_top (
   ) {
   
   sig rst;                  // reset signal
+  sig rom_output[42];
   ws2812b ws2812b;
   fsm state(.clk(clk), .rst(rst)) = {IDLE, LOAD, CLEAR};
   
@@ -26,6 +27,8 @@ module au_top (
   edge_detector latch_button_edge(.clk(clk), #RISE(1), #FALL(0));
   button_conditioner clear_button(.clk(clk));
   edge_detector clear_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  
+  rom rom;
   
 
   .clk(clk) {
@@ -60,12 +63,16 @@ module au_top (
     ws2812b.usb_rx = usb_rx;
     ws2812b.color = b10;
     ws2812b.action = b00;
-    ws2812b.lit_leds_1 = 6b000001;
-    ws2812b.lit_leds_2 = 6b000010;
-    ws2812b.lit_leds_3 = 6b000100;
-    ws2812b.lit_leds_4 = 6b001000;
-    ws2812b.lit_leds_5 = 6b010000;
-    ws2812b.lit_leds_6 = 6b100000;
+    
+    rom.address = 0;
+    rom_output = rom.value;
+    
+    ws2812b.lit_leds_1 = rom_output[5:0];
+    ws2812b.lit_leds_2 = rom_output[11:6];
+    ws2812b.lit_leds_3 = rom_output[17:12];
+    ws2812b.lit_leds_4 = rom_output[23:18];
+    ws2812b.lit_leds_5 = rom_output[29:24];
+    ws2812b.lit_leds_6 = rom_output[35:30];
        
     
     case (state.q){

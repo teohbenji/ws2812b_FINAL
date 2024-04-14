@@ -9,8 +9,9 @@ module rom (
 	output value[42] 
   ) 
 {
+  //(end -> start of connector)
   const ROM = {
-  36b000011001110001100000100000111000001 //map 1 (end -> start of connector)
+  42b101000000011001110001100000100000111000001 //map 1 
   };
   
   always {
