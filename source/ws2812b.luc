@@ -13,11 +13,9 @@ module ws2812b (
     output outled_1,           // to LED strip, Br pin C40, connect LED Strip to 5V for power    
     output outled_2,    
     output outled_3,
-    /*
     output outled_4,
     output outled_5,
     output outled_6,
-    */
     output usb_tx,          // USB->Serial output
     output io_led [3][8],   // LEDs on IO Shield
     output io_seg [8],      // 7-segment LEDs on IO Shield
@@ -52,6 +50,13 @@ module ws2812b (
   sig current_color_encoding_2[$clog2(ENCODING_AMOUNT)];
   sig encoded_pixel_address_3[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
   sig current_color_encoding_3[$clog2(ENCODING_AMOUNT)];
+  sig encoded_pixel_address_4[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
+  sig current_color_encoding_4[$clog2(ENCODING_AMOUNT)];
+  sig encoded_pixel_address_5[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
+  sig current_color_encoding_5[$clog2(ENCODING_AMOUNT)];
+  sig encoded_pixel_address_6[$clog2(PIXEL_COUNT)*$clog2(ENCODING_AMOUNT)];
+  sig current_color_encoding_6[$clog2(ENCODING_AMOUNT)];
+  
 
   var index;
 
@@ -65,22 +70,30 @@ module ws2812b (
   dff temp_encoding_2[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0));
   dff led_encoding_3[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(8x{ROM[0]})); 
   dff temp_encoding_3[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0));
+  dff led_encoding_4[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(8x{ROM[0]})); 
+  dff temp_encoding_4[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0));
+  dff led_encoding_5[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(8x{ROM[0]})); 
+  dff temp_encoding_5[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0));
+  dff led_encoding_6[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(8x{ROM[0]})); 
+  dff temp_encoding_6[PIXEL_COUNT*$clog2(ENCODING_AMOUNT)](.clk(clk), .rst(rst), #INIT(0));
+  
   
   
   ws2812b_writer led_strip_1(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst));
   ws2812b_writer led_strip_2(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
-  ws2812b_writer led_strip_3(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
+  ws2812b_writer led_strip_3(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst));
+  ws2812b_writer led_strip_4(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst));
+  ws2812b_writer led_strip_5(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst)); 
+  ws2812b_writer led_strip_6(#PIXEL_COUNT(PIXEL_COUNT), .clk(clk), .rst(rst));  
    
   fsm state(.clk(clk), .rst(rst)) = {INIT, IDLE, LOAD, CLEAR};
   
   reverser index_reverser_1(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
   reverser index_reverser_2(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));  
   reverser index_reverser_3(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
-  /*
   reverser index_reverser_4(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
   reverser index_reverser_5(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
   reverser index_reverser_6(.clk(clk), .rst(rst), #COLUMN_DIMENSION(COLUMN_DIMENSION), #ROW_DIMENSION(ROW_DIMENSION));
-  */
   
   // a state to toggle revere 
   dff matrix_used(#INIT(0), .clk(clk), .rst(rst));
@@ -110,15 +123,27 @@ module ws2812b (
     led_strip_2.clear = 0; 
     led_strip_3.update = 0; 
     led_strip_3.clear = 0; 
+    led_strip_4.update = 0; 
+    led_strip_4.clear = 0; 
+    led_strip_5.update = 0; 
+    led_strip_5.clear = 0; 
+    led_strip_6.update = 0; 
+    led_strip_6.clear = 0; 
     
     case (state.q){
       state.INIT:
           temp_encoding_1.d = 8x{ROM[0]};//temp value to silence error
           led_strip_1.clear = 1; //turn off strip at the start 
-          temp_encoding_2.d = 8x{ROM[0]};//temp value to silence error
-          led_strip_2.clear = 1; //turn off strip at the start
-          temp_encoding_3.d = 8x{ROM[0]};//temp value to silence error
-          led_strip_3.clear = 1; //turn off strip at the start
+          temp_encoding_2.d = 8x{ROM[0]};
+          led_strip_2.clear = 1; 
+          temp_encoding_3.d = 8x{ROM[0]};
+          led_strip_3.clear = 1; 
+          temp_encoding_4.d = 8x{ROM[0]};//temp value to silence error
+          led_strip_4.clear = 1; //turn off strip at the start 
+          temp_encoding_5.d = 8x{ROM[0]};
+          led_strip_5.clear = 1; 
+          temp_encoding_6.d = 8x{ROM[0]};
+          led_strip_6.clear = 1; 
           
           state.d = state.IDLE;
         
@@ -132,18 +157,30 @@ module ws2812b (
                     temp_encoding_1.d = 8x{ROM[0]};
                     temp_encoding_2.d = 8x{ROM[0]};
                     temp_encoding_3.d = 8x{ROM[0]};
+                    temp_encoding_4.d = 8x{ROM[0]};
+                    temp_encoding_5.d = 8x{ROM[0]};
+                    temp_encoding_6.d = 8x{ROM[0]};
                 b01: 
                     temp_encoding_1.d = 8x{ROM[1]};
                     temp_encoding_2.d = 8x{ROM[1]};
                     temp_encoding_3.d = 8x{ROM[1]};
+                    temp_encoding_4.d = 8x{ROM[1]};
+                    temp_encoding_5.d = 8x{ROM[1]};
+                    temp_encoding_6.d = 8x{ROM[1]};
                 b10: 
                     temp_encoding_1.d = 8x{ROM[2]};
                     temp_encoding_2.d = 8x{ROM[2]};
                     temp_encoding_3.d = 8x{ROM[2]};
+                    temp_encoding_4.d = 8x{ROM[2]};
+                    temp_encoding_5.d = 8x{ROM[2]};
+                    temp_encoding_6.d = 8x{ROM[2]};
                 b11: 
                     temp_encoding_1.d = 8x{ROM[3]};
                     temp_encoding_2.d = 8x{ROM[3]};
                     temp_encoding_3.d = 8x{ROM[3]};
+                    temp_encoding_4.d = 8x{ROM[3]};
+                    temp_encoding_5.d = 8x{ROM[3]};
+                    temp_encoding_6.d = 8x{ROM[3]};
               }
               
               // Turn off specific LEDs for strip 1
@@ -166,6 +203,27 @@ module ws2812b (
                       temp_encoding_3.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
                   }
               }
+            
+             // Turn off specific LEDs for strip 4
+              for (index = 0; index < 6; index++) {
+                  if (lit_leds_4[index] == b0) {
+                      temp_encoding_4.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                  }
+              }
+            
+              // Turn off specific LEDs for strip 5
+              for (index = 0; index < 6; index++) {
+                  if (lit_leds_5[index] == b0) {
+                      temp_encoding_5.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                  }
+              }
+            
+              // Turn off specific LEDs for strip 6
+              for (index = 0; index < 6; index++) {
+                  if (lit_leds_6[index] == b0) {
+                      temp_encoding_6.d[index*$clog2(ENCODING_AMOUNT) +: $clog2(ENCODING_AMOUNT)] = 3b000;
+                  }
+              }
 
               state.d = state.LOAD;
               
@@ -177,6 +235,9 @@ module ws2812b (
               temp_encoding_1.d = temp_encoding_1.q;//do nothing
               temp_encoding_2.d = temp_encoding_2.q;
               temp_encoding_3.d = temp_encoding_3.q;
+              temp_encoding_4.d = temp_encoding_4.q;//do nothing
+              temp_encoding_5.d = temp_encoding_5.q;
+              temp_encoding_6.d = temp_encoding_6.q;
           }           
         
       state.LOAD:
@@ -189,16 +250,37 @@ module ws2812b (
           }
         
           if (led_strip_2.reset){
-              // tell the LED to update the pixels for led strip 1
+              // tell the LED to update the pixels for led strip 2
               led_strip_2.update = 1;
               led_encoding_2.d = temp_encoding_2.q;
               state.d = state.IDLE;
           }
           
           if (led_strip_3.reset){
-              // tell the LED to update the pixels for led strip 1
+              // tell the LED to update the pixels for led strip 3
               led_strip_3.update = 1;
               led_encoding_3.d = temp_encoding_3.q;
+              state.d = state.IDLE;
+          }
+        
+          if (led_strip_4.reset){
+              // tell the LED to update the pixels for led strip 4
+              led_strip_4.update = 1;
+              led_encoding_4.d = temp_encoding_4.q;
+              state.d = state.IDLE;
+          }
+        
+          if (led_strip_5.reset){
+              // tell the LED to update the pixels for led strip 5
+              led_strip_5.update = 1;
+              led_encoding_5.d = temp_encoding_5.q;
+              state.d = state.IDLE;
+          }
+          
+          if (led_strip_6.reset){
+              // tell the LED to update the pixels for led strip 6
+              led_strip_6.update = 1;
+              led_encoding_6.d = temp_encoding_6.q;
               state.d = state.IDLE;
           }
       
@@ -206,6 +288,9 @@ module ws2812b (
           led_strip_1.clear = 1;
           led_strip_2.clear = 1;
           led_strip_3.clear = 1;
+          led_strip_4.clear = 1;
+          led_strip_5.clear = 1;
+          led_strip_6.clear = 1;
           state.d = state.IDLE;  
           }
     
@@ -224,6 +309,21 @@ module ws2812b (
     index_reverser_3.writer_pixel_done = led_strip_3.next_pixel;
     index_reverser_3.activate = matrix_used.q;
     encoded_pixel_address_3 = index_reverser_3.effective_pixel_address * $clog2(ENCODING_AMOUNT);
+    
+    index_reverser_4.original_pixel_address = led_strip_4.pixel_address;
+    index_reverser_4.writer_pixel_done = led_strip_4.next_pixel;
+    index_reverser_4.activate = matrix_used.q;
+    encoded_pixel_address_4 = index_reverser_4.effective_pixel_address * $clog2(ENCODING_AMOUNT);
+    
+    index_reverser_5.original_pixel_address = led_strip_5.pixel_address;
+    index_reverser_5.writer_pixel_done = led_strip_5.next_pixel;
+    index_reverser_5.activate = matrix_used.q;
+    encoded_pixel_address_5 = index_reverser_5.effective_pixel_address * $clog2(ENCODING_AMOUNT);
+    
+    index_reverser_6.original_pixel_address = led_strip_6.pixel_address;
+    index_reverser_6.writer_pixel_done = led_strip_6.next_pixel;
+    index_reverser_6.activate = matrix_used.q;
+    encoded_pixel_address_6 = index_reverser_6.effective_pixel_address * $clog2(ENCODING_AMOUNT);
     
     // led_strip.pixel_address will vary between 0000 to 1100 
     // address 0 --> encoding bit 1:0 
@@ -244,14 +344,32 @@ module ws2812b (
        current_color_encoding_3[index] = led_encoding_3.q[encoded_pixel_address_3+index];
     }
     
+    for (index=0; index<$clog2(ENCODING_AMOUNT); index++){
+       current_color_encoding_4[index] = led_encoding_4.q[encoded_pixel_address_4+index];
+    }
+    
+    for (index=0; index<$clog2(ENCODING_AMOUNT); index++){
+       current_color_encoding_5[index] = led_encoding_5.q[encoded_pixel_address_5+index];
+    }
+    
+    for (index=0; index<$clog2(ENCODING_AMOUNT); index++){
+       current_color_encoding_6[index] = led_encoding_6.q[encoded_pixel_address_6+index];
+    }
+    
     // based on the encoding extracted from dff led_encoding, we get the 24bit color value
     led_strip_1.color = LEDCOLOR[current_color_encoding_1]; 
     led_strip_2.color = LEDCOLOR[current_color_encoding_2]; 
     led_strip_3.color = LEDCOLOR[current_color_encoding_3]; 
+    led_strip_4.color = LEDCOLOR[current_color_encoding_4]; 
+    led_strip_5.color = LEDCOLOR[current_color_encoding_5]; 
+    led_strip_6.color = LEDCOLOR[current_color_encoding_6]; 
     
     outled_1=led_strip_1.led;
     outled_2=led_strip_2.led;
     outled_3=led_strip_3.led;
+    outled_4=led_strip_4.led;
+    outled_5=led_strip_5.led;
+    outled_6=led_strip_6.led;
       
     
     // debug 

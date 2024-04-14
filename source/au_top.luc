@@ -92,9 +92,9 @@ module au_top (
     outled_1 = ws2812b.outled_1;
     outled_2 = ws2812b.outled_2; 
     outled_3 = ws2812b.outled_3; 
-    outled_4 = ws2812b.outled_1; 
-    outled_5 = ws2812b.outled_1; 
-    outled_6 = ws2812b.outled_1;  
+    outled_4 = ws2812b.outled_4; 
+    outled_5 = ws2812b.outled_5; 
+    outled_6 = ws2812b.outled_6;  
     io_led = ws2812b.io_led; 
 
 
