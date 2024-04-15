@@ -14,7 +14,8 @@ module au_top (
     output io_seg [8],      // 7-segment LEDs on IO Shield (ANODE)
     output io_sel [4],      // Digit select on IO Shield
     input io_button [5],    // 5 buttons on IO Shield
-    input io_dip [3][8]     // DIP switches on IO Shield
+    input io_dip [3][8],     // DIP switches on IO Shield
+    input up_btn
   ) {
   
   sig rst;                  // reset signal
@@ -22,11 +23,15 @@ module au_top (
   ws2812b ws2812b;
   fsm state(.clk(clk), .rst(rst)) = {IDLE, LOAD, CLEAR};
   
-  // user inputs 
+  // io button an alu
   button_conditioner latch_button(.clk(clk));
   edge_detector latch_button_edge(.clk(clk), #RISE(1), #FALL(0));
   button_conditioner clear_button(.clk(clk));
   edge_detector clear_button_edge(.clk(clk), #RISE(1), #FALL(0));
+  
+  // up btn for testing
+  button_conditioner up_button(.clk(clk));
+  edge_detector up_button_edge(.clk(clk), #RISE(1), #FALL(0));
   
   rom rom;
   
@@ -57,6 +62,10 @@ module au_top (
     clear_button.in = io_button[2]; // use this button to turn off all LEDs 
     clear_button_edge.in = clear_button.out;
     
+    //for testing
+    up_button.in = up_btn;
+    up_button_edge.in = up_button.out;
+    
     
     ws2812b.clk = clk;
     ws2812b.rst_n = rst_n;
@@ -78,7 +87,7 @@ module au_top (
     case (state.q){
       state.IDLE:
          ws2812b.action = b00; //reset action back to idle
-         if (latch_button_edge.out){
+         if (up_button_edge.out){
             state.d = state.LOAD;
           }
          if (clear_button_edge.out){
