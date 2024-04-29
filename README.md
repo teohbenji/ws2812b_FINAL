@@ -1,5 +1,5 @@
 #Note
-Modification of driver code at https://github.com/natalieagus/ws2812b for 50.002 project
+Modification of driver code at https://github.com/natalieagus/ws2812b for [50.002 project](https://github.com/teohbenji/Recall-Game)
 
 ## WS2812B Driver
 
