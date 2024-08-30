@@ -1,7 +1,5 @@
-#Note
-Modification of driver code at https://github.com/natalieagus/ws2812b for [50.002 project](https://github.com/teohbenji/Recall-Game)
-
 ## WS2812B Driver
+Note: This is a fork of https://github.com/natalieagus/ws2812b for [50.002 project](https://github.com/teohbenji/Recall-Game)
 
 WS2812B is a intelligent control LED light source that the control circuit and RGB chip are integrated in a package of 5050 components. You The data transfer protocol use single **NZR** communication mode. This driver is written in [Lucid](https://alchitry.com/lucid) and is meant to be run on [Alchitry Au](https://www.sparkfun.com/products/16527) Boards + [Alchitry Br](https://www.sparkfun.com/products/16524) prototype element board.
 
